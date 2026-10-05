@@ -24,7 +24,7 @@ st.markdown(
         margin-top: 15px;
     }
     .stText {
-        color: white; /* Dark gray for body text */
+        color: #333333; /* Dark gray for body text */
         font-size: 16px;
     }
     .stButton>button {
@@ -69,13 +69,13 @@ st.markdown(
         margin-bottom: 20px;
     }
     .welcome-text {
-        color: white;
+        color: #333333;
         font-size: 18px;
         margin-bottom: 30px;
         padding: 0 20px; /* Add padding for better spacing */
     }
     .about-text {
-        color: white;
+        color: #333333;
         font-size: 16px;
         padding: 0 20px; /* Add padding for better spacing */
     }

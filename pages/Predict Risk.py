@@ -113,7 +113,7 @@ health_facilities_agg = health_facilities.groupby("Region")["Total"].sum().reset
 health_facilities_agg.rename(columns={"Total": "Number_of_Facilities"}, inplace=True)
 health_facilities_agg['Region'] = health_facilities_agg['Region'].str.lower().str.strip()
 
-latest_sanitation = sanitation_data[sanitation_data["Year"] == 2024]
+latest_sanitation = sanitation_data[sanitation_data["Year"] == 2024].copy()
 latest_sanitation['Region'] = latest_sanitation['Region'].str.lower().str.strip()
 avg_sanitation_level = latest_sanitation["Sanitation_Level"].mean()
 avg_water_access = latest_sanitation["Water_Access_Percentage"].mean()
@@ -228,6 +228,9 @@ if page == "Disease Prediction":
         diarrhea_severity = st.slider("Diarrhea Severity", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
         abdominal_pain_severity = st.slider("Abdominal Pain Severity", min_value=0.0, max_value=10.0, value=0.0, step=0.1)
 
+    # Check before the defaults below fill in anything the user left blank
+    details_complete = all([region, gender, water_source, vaccination_status, recent_travel, food_hygiene])
+
     # Convert region to lowercase to match training data
     region = region.lower().strip() if region else merged_data["Region"].iloc[0].lower().strip()
     case_prevalence = region_prevalence.get(region, region_prevalence.iloc[0])
@@ -281,6 +284,19 @@ if page == "Disease Prediction":
         if len(valid_regions) < len(input_data_batch):
             st.warning(f"Some regions in your file are not recognized by the model. Using only valid regions: {list(le_region.classes_)}")
             input_data_batch = input_data_batch[input_data_batch["region"].isin(valid_regions)]
+        if input_data_batch.empty:
+            st.error("None of the rows in your file have a recognized region.")
+            st.stop()
+        # Accept any capitalization (e.g. "male", "PIPED"), then reject values the model has never seen
+        categorical_encoders = {"gender": le_gender, "water_source": le_water, "vaccination_status": le_vaccination,
+                                "recent_travel": le_travel, "food_hygiene": le_food}
+        for col, encoder in categorical_encoders.items():
+            input_data_batch[col] = input_data_batch[col].astype(str).str.strip().str.capitalize()
+            invalid = set(input_data_batch[col]) - set(encoder.classes_)
+            if invalid:
+                st.error(f"Unrecognized values in {col}: {', '.join(sorted(invalid))}. "
+                         f"Allowed values: {', '.join(encoder.classes_)}.")
+                st.stop()
         input_data_batch["case_prevalence"] = input_data_batch["region"].map(region_prevalence).fillna(0)
         encoded_batch = input_data_batch.copy()
         encoded_batch["gender"] = le_gender.transform(encoded_batch["gender"])
@@ -313,7 +329,7 @@ if page == "Disease Prediction":
             st.stop()
 
     if st.button("Predict My Risk"):
-        if not all([region, water_source, gender, vaccination_status, recent_travel, food_hygiene]):
+        if not details_complete:
             st.warning("Please fill in all the details to predict your risk.")
         else:
             try:
@@ -370,15 +386,15 @@ if page == "Disease Prediction":
 
                 # Generate report with recommendation
                 report_data = pd.DataFrame({
-                    "Input": ["Age", "Gender", "Region", "Water Source", "Vaccination Status", "Recent Travel", "Food Hygiene", "Fever Severity", "Diarrhea Severity", "Abdominal Pain Severity"],
-                    "Value": [age, gender, region.capitalize(), water_source, vaccination_status, recent_travel, food_hygiene, fever_severity, diarrhea_severity, abdominal_pain_severity]
+                    "Field": ["Age", "Gender", "Region", "Water Source", "Vaccination Status", "Recent Travel",
+                              "Food Hygiene", "Fever Severity", "Diarrhea Severity", "Abdominal Pain Severity",
+                              "Predicted Condition", "No Disease Probability", "Typhoid Probability",
+                              "Cholera Probability", "Recommendation"],
+                    "Value": [age, gender, region.title(), water_source, vaccination_status, recent_travel,
+                              food_hygiene, fever_severity, diarrhea_severity, abdominal_pain_severity,
+                              ["No Disease", "Typhoid", "Cholera"][prediction], f"{no_disease_prob:.2%}",
+                              f"{typhoid_prob:.2%}", f"{cholera_prob:.2%}", recommendation]
                 })
-                report_data["Prediction"] = ["N/A"] * 10
-                report_data.loc[report_data["Input"] == "Region", "Prediction"] = f"{['No Disease', 'Typhoid', 'Cholera'][prediction]}"
-                report_data.loc[report_data["Input"] == "No Disease Probability", "Value"] = f"{no_disease_prob:.2%}"
-                report_data.loc[report_data["Input"] == "Typhoid Probability", "Value"] = f"{typhoid_prob:.2%}"
-                report_data.loc[report_data["Input"] == "Cholera Probability", "Value"] = f"{cholera_prob:.2%}"
-                report_data.loc[report_data["Input"] == "Recommendation", "Value"] = recommendation
 
                 csv = report_data.to_csv(index=False)
                 st.download_button(

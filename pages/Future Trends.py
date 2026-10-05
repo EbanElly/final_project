@@ -1,9 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 from prophet import Prophet
-from datetime import datetime, timedelta
 import sqlite3
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -100,22 +98,7 @@ def load_health_data():
     df['Region'] = df['Region'].str.lower().str.strip()
     return df
 
-@st.cache_data
-def load_facilities_data():
-    df = pd.read_csv("data/health_facilities_distribution_2025.csv")
-    df['Region'] = df['Region'].str.lower().str.strip()
-    return df
-
-@st.cache_data
-def load_sanitation_data():
-    df = pd.read_csv("data/sanitation_water_supply.csv")
-    df['Year'] = pd.to_datetime(df['Year'], format='%Y')
-    df['Region'] = df['Region'].str.lower().str.strip()
-    return df
-
 health_data = load_health_data()
-facilities_data = load_facilities_data()
-sanitation_data = load_sanitation_data()
 
 # --- Main Content ---
 st.markdown('<div class="stHeader">📈 Disease Outbreak Forecasting</div>', unsafe_allow_html=True)
@@ -140,46 +123,31 @@ if st.button("Generate Forecast"):
             st.warning(f"No outbreak data available for {region.capitalize()}. Skipping forecast.")
         else:
             # Impute missing values with linear interpolation
-            region_health = region_health.set_index("Year").interpolate().reset_index()
+            region_health["y"] = region_health["y"].interpolate()
 
-            # Merge with facilities and sanitation data (latest year)
-            latest_sanitation = sanitation_data[sanitation_data["Year"] == sanitation_data["Year"].max()]
-            region_facilities = facilities_data[facilities_data["Region"] == region]
-            merged_data = region_health.merge(region_facilities[["Region", "Total"]], on="Region", how="left") \
-                                      .merge(latest_sanitation[["Region", "Sanitation_Level"]], on="Region", how="left") \
-                                      .fillna({"Total": 0, "Sanitation_Level": latest_sanitation["Sanitation_Level"].mean()})
-
-            # Prepare Prophet input
-            prophet_df = merged_data.rename(columns={"Year": "ds", "y": "y"})[["ds", "y", "Total", "Sanitation_Level"]]
+            prophet_df = region_health.rename(columns={"Year": "ds"})[["ds", "y"]].reset_index(drop=True)
             train_df, test_df = train_test_split(prophet_df, test_size=0.2, shuffle=False)
 
-            # --- Model Training and Forecasting ---
-            model = Prophet(yearly_seasonality=True, seasonality_prior_scale=10)
-            model.add_regressor("Total")
-            model.add_regressor("Sanitation_Level")
+            # Data is one value per year, so there is no within-year seasonality to model
+            def make_model():
+                return Prophet(yearly_seasonality=False, weekly_seasonality=False, daily_seasonality=False)
 
             try:
-                model.fit(train_df)
-                forecast_future = model.make_future_dataframe(periods=n_years, freq='Y')
-                
-                # Use latest values for regressors
-                latest_total = merged_data["Total"].iloc[-1]
-                latest_sanitation = merged_data["Sanitation_Level"].iloc[-1]
-                forecast_future["Total"] = latest_total
-                forecast_future["Sanitation_Level"] = latest_sanitation
-                
-                # Ensure 'ds' is preserved and regressors are aligned
-                forecast_future = forecast_future[['ds', 'Total', 'Sanitation_Level']].copy()
-                forecast = model.predict(forecast_future)
+                # --- Validation: fit on earlier years, score on the held-out latest years ---
+                val_model = make_model()
+                val_model.fit(train_df)
+                test_forecast = val_model.predict(test_df[["ds"]])
+                mse = np.mean((test_forecast["yhat"].values - test_df["y"].values) ** 2)
+                st.markdown(f'<div class="stText">Model Validation MSE: {mse:.2f}</div>', unsafe_allow_html=True)
+
+                # --- Forecast: refit on all years, predict only years after the last observation ---
+                model = make_model()
+                model.fit(prophet_df)
+                future_dates = pd.date_range(prophet_df["ds"].max(), periods=n_years + 1, freq="YS")[1:]
+                forecast = model.predict(pd.DataFrame({"ds": future_dates}))
                 forecast["yhat"] = forecast["yhat"].clip(lower=0)
 
-                # Save Current Trend Forecast
                 save_forecast(st.session_state['user_id'], disease, region, "Current Trend", forecast[["ds", "yhat"]])
-
-                # --- Validation ---
-                test_forecast = model.predict(test_df)
-                mse = np.mean((test_forecast["yhat"] - test_df["y"])**2)
-                st.markdown(f'<div class="stText">Model Validation MSE: {mse:.2f}</div>', unsafe_allow_html=True)
 
                 # --- Visualization ---
                 fig = go.Figure()
@@ -193,8 +161,8 @@ if st.button("Generate Forecast"):
 
                 # --- Forecast Table ---
                 st.markdown('<div class="stSubheader">📄 Future Cases (Current Trend)</div>', unsafe_allow_html=True)
-                st.dataframe(forecast[["ds", "yhat"]].round(0).rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}))
-                csv_current = forecast[["ds", "yhat"]].rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}).to_csv(index=False)
+                st.dataframe(forecast[["ds", "yhat"]].assign(ds=forecast["ds"].dt.year).round(0).rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}))
+                csv_current = forecast[["ds", "yhat"]].assign(ds=forecast["ds"].dt.year).rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}).to_csv(index=False)
                 st.download_button(f"Download Current Trend for {region.capitalize()}", csv_current, 
                                    file_name=f"{region}_{disease}_current_trend.csv")
 
@@ -214,12 +182,12 @@ if st.button("Generate Forecast"):
                 trend = (prophet_df["y"].iloc[-1] - prophet_df["y"].iloc[0]) / (len(prophet_df) - 1) if len(prophet_df) > 1 else 0
                 forecast_fallback = [last_3_years + i * trend for i in range(1, n_years + 1)]
                 forecast_df = pd.DataFrame({
-                    "ds": [prophet_df["ds"].iloc[-1] + timedelta(days=365 * i) for i in range(1, n_years + 1)],
+                    "ds": [prophet_df["ds"].iloc[-1] + pd.DateOffset(years=i) for i in range(1, n_years + 1)],
                     "yhat": forecast_fallback
                 })
                 forecast_df["yhat"] = forecast_df["yhat"].clip(lower=0)
                 save_forecast(st.session_state['user_id'], disease, region, "Fallback Trend", forecast_df)
-                st.dataframe(forecast_df[["ds", "yhat"]].round(0).rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}))
+                st.dataframe(forecast_df[["ds", "yhat"]].assign(ds=forecast_df["ds"].dt.year).round(0).rename(columns={"ds": "Year", "yhat": "Forecasted_Cases"}))
 
 # --- Footer ---
 st.sidebar.markdown('<div class="stText">Developed by [Your Name/Organization] | Data as of June 05, 2025, 11:38 PM EAT</div>', unsafe_allow_html=True)

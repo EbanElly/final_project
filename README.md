@@ -28,7 +28,8 @@ The SQLite database `users.db` is created automatically on first run.
 | `pages/` | Predict Risk, Future Trends, Map Visualizer pages |
 | `train.py` | Generates the synthetic training set and trains/saves the models |
 | `models/` | Trained models, label encoders, feature scaler, performance report |
-| `data/` | Regional health, facilities, sanitation data and Tanzania boundary GeoJSON |
+| `data/` | Regional health, facilities, sanitation data and Tanzania boundary GeoJSON; `sample.csv` is an example batch-upload file for Predict Risk |
+| `.streamlit/config.toml` | App theme |
 | `images/` | Images used in the UI |
 
 ## Retraining
