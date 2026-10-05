@@ -5,6 +5,7 @@ from folium import Map
 from folium.plugins import HeatMap
 from streamlit_folium import folium_static
 import joblib
+import sqlite3
 import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Disease Risk Predictor", layout="wide", initial_sidebar_state="expanded")
@@ -159,18 +160,55 @@ if page == "Disease Prediction":
     st.markdown('<div class="stHeader">Disease Risk Predictor</div>', unsafe_allow_html=True)
     st.markdown('<div class="stText">Find out your risk of typhoid and cholera based on your info and surroundings.</div>', unsafe_allow_html=True)
 
+    @st.cache_resource
+    def load_models():
+        names = ["rf_model", "xgb_model", "le_gender", "le_water", "le_region",
+                 "le_vaccination", "le_travel", "le_food", "scaler"]
+        return [joblib.load(f"models/{name}.pkl") for name in names]
+
     try:
-        rf_model = joblib.load("models/rf_model.pkl")
-        xgb_model = joblib.load("models/xgb_model.pkl")
-        le_gender = joblib.load("models/le_gender.pkl")
-        le_water = joblib.load("models/le_water.pkl")
-        le_region = joblib.load("models/le_region.pkl")
-        le_vaccination = joblib.load("models/le_vaccination.pkl")
-        le_travel = joblib.load("models/le_travel.pkl")
-        le_food = joblib.load("models/le_food.pkl")
+        (rf_model, xgb_model, le_gender, le_water, le_region,
+         le_vaccination, le_travel, le_food, scaler) = load_models()
     except Exception as e:
         st.error(f"Oops! Something went wrong loading the prediction tools: {e}")
         st.stop()
+
+    # Feature columns in the order the models were trained on (see train.py)
+    base_features = ["age", "gender", "fever_severity", "diarrhea_severity", "abdominal_pain_severity",
+                     "water_source", "region", "vaccination_status", "recent_travel", "food_hygiene",
+                     "case_prevalence"]
+    numeric_cols = ["age", "fever_severity", "diarrhea_severity", "abdominal_pain_severity", "case_prevalence"]
+
+    def build_features(df):
+        """Apply the same scaling and engineered features as train.py to encoded input."""
+        X = df[base_features].astype(float).copy()
+        age_risk = np.where(X["age"] > 50, 1, 0)
+        X[numeric_cols] = scaler.transform(X[numeric_cols])
+        X["symptom_sum"] = X["fever_severity"] + X["diarrhea_severity"] + X["abdominal_pain_severity"]
+        X["age_risk"] = age_risk
+        return X
+
+    # train.py takes each region's first row as its case prevalence
+    region_prevalence = regional_data.drop_duplicates("Region").set_index("Region")["case_prevalence"]
+
+    def save_prediction(prediction_type, row, prediction, probs):
+        conn = sqlite3.connect("users.db")
+        try:
+            conn.execute("""
+                INSERT INTO predictions (user_id, prediction_type, age, gender, fever_severity,
+                    diarrhea_severity, abdominal_pain_severity, water_source, region,
+                    vaccination_status, recent_travel, food_hygiene, case_prevalence,
+                    prediction, no_disease_prob, typhoid_prob, cholera_prob)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (st.session_state.get("user_id"), prediction_type, int(row["age"]), row["gender"],
+                  float(row["fever_severity"]), float(row["diarrhea_severity"]),
+                  float(row["abdominal_pain_severity"]), row["water_source"], row["region"],
+                  row["vaccination_status"], row["recent_travel"], row["food_hygiene"],
+                  float(row["case_prevalence"]), prediction,
+                  float(probs[0]), float(probs[1]), float(probs[2])))
+            conn.commit()
+        finally:
+            conn.close()
 
     col1, col2 = st.columns([1, 1])
 
@@ -192,8 +230,7 @@ if page == "Disease Prediction":
 
     # Convert region to lowercase to match training data
     region = region.lower().strip() if region else merged_data["Region"].iloc[0].lower().strip()
-    region_data = regional_data[regional_data["Region"] == region].iloc[0] if region in regional_data["Region"].values else regional_data.iloc[0]
-    case_prevalence = region_data["case_prevalence"]
+    case_prevalence = region_prevalence.get(region, region_prevalence.iloc[0])
 
     # Handle None values for categorical inputs
     gender = gender if gender else "Male"
@@ -203,7 +240,7 @@ if page == "Disease Prediction":
     food_hygiene = food_hygiene if food_hygiene else "Good"
 
     # Prepare input data with additional features from train.py
-    input_data_single = pd.DataFrame({
+    input_data_single = build_features(pd.DataFrame({
         "age": [age],
         "gender": [le_gender.transform([gender])[0]],
         "fever_severity": [fever_severity],
@@ -215,15 +252,14 @@ if page == "Disease Prediction":
         "recent_travel": [le_travel.transform([recent_travel])[0]],
         "food_hygiene": [le_food.transform([food_hygiene])[0]],
         "case_prevalence": [case_prevalence]
-    })
-    input_data_single["symptom_sum"] = input_data_single["fever_severity"] + input_data_single["diarrhea_severity"] + input_data_single["abdominal_pain_severity"]
-    input_data_single["age_risk"] = np.where(input_data_single["age"] > 50, 1, 0)
+    }))
 
     st.markdown('<div class="stSubheader">Predict for Many People</div>', unsafe_allow_html=True)
     st.markdown('<div class="stText">Upload a file with info about many people to predict their risks.</div>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload CSV", type=["csv"], help="The file should have: age, gender, fever_severity, diarrhea_severity, abdominal_pain_severity, water_source, region, vaccination_status, recent_travel, food_hygiene (severities 0-10)")
     if uploaded_file is not None:
         input_data_batch = pd.read_csv(uploaded_file)
+        input_data_batch.columns = input_data_batch.columns.str.strip().str.lower()
         required_columns = ["age", "gender", "fever_severity", "diarrhea_severity", "abdominal_pain_severity", "water_source", "region", "vaccination_status", "recent_travel", "food_hygiene"]
         if not all(col in input_data_batch.columns for col in required_columns):
             st.error(f"Missing column in your file: {', '.join(set(required_columns) - set(input_data_batch.columns))}")
@@ -232,11 +268,6 @@ if page == "Disease Prediction":
             if not ((input_data_batch[col] >= 0) & (input_data_batch[col] <= 10)).all():
                 st.error(f"Values in {col} must be between 0 and 10.")
                 st.stop()
-        input_data_batch = input_data_batch.merge(
-            regional_data[["Region", "case_prevalence"]],
-            on="Region",
-            how="left"
-        ).fillna({"case_prevalence": 0})
         # Handle None or invalid values in batch data
         input_data_batch["region"] = input_data_batch["region"].str.lower().str.strip()
         input_data_batch["gender"] = input_data_batch["gender"].fillna("Male")
@@ -250,26 +281,31 @@ if page == "Disease Prediction":
         if len(valid_regions) < len(input_data_batch):
             st.warning(f"Some regions in your file are not recognized by the model. Using only valid regions: {list(le_region.classes_)}")
             input_data_batch = input_data_batch[input_data_batch["region"].isin(valid_regions)]
-        input_data_batch["gender"] = le_gender.transform(input_data_batch["gender"])
-        input_data_batch["water_source"] = le_water.transform(input_data_batch["water_source"])
-        input_data_batch["region"] = le_region.transform(input_data_batch["region"])
-        input_data_batch["vaccination_status"] = le_vaccination.transform(input_data_batch["vaccination_status"])
-        input_data_batch["recent_travel"] = le_travel.transform(input_data_batch["recent_travel"])
-        input_data_batch["food_hygiene"] = le_food.transform(input_data_batch["food_hygiene"])
-        # Add additional features
-        input_data_batch["symptom_sum"] = input_data_batch["fever_severity"] + input_data_batch["diarrhea_severity"] + input_data_batch["abdominal_pain_severity"]
-        input_data_batch["age_risk"] = np.where(input_data_batch["age"] > 50, 1, 0)
+        input_data_batch["case_prevalence"] = input_data_batch["region"].map(region_prevalence).fillna(0)
+        encoded_batch = input_data_batch.copy()
+        encoded_batch["gender"] = le_gender.transform(encoded_batch["gender"])
+        encoded_batch["water_source"] = le_water.transform(encoded_batch["water_source"])
+        encoded_batch["region"] = le_region.transform(encoded_batch["region"])
+        encoded_batch["vaccination_status"] = le_vaccination.transform(encoded_batch["vaccination_status"])
+        encoded_batch["recent_travel"] = le_travel.transform(encoded_batch["recent_travel"])
+        encoded_batch["food_hygiene"] = le_food.transform(encoded_batch["food_hygiene"])
 
         try:
-            rf_probs = rf_model.predict_proba(input_data_batch)
-            xgb_probs = xgb_model.predict_proba(input_data_batch)
+            features_batch = build_features(encoded_batch)
+            rf_probs = rf_model.predict_proba(features_batch)
+            xgb_probs = xgb_model.predict_proba(features_batch)
             ensemble_probs = (rf_probs + xgb_probs) / 2
-            results_df = input_data_batch.copy()
+            results_df = input_data_batch[required_columns + ["case_prevalence"]].copy()
             results_df["No_Disease_Prob"] = ensemble_probs[:, 0]
             results_df["Typhoid_Prob"] = ensemble_probs[:, 1]
             results_df["Cholera_Prob"] = ensemble_probs[:, 2]
             results_df["Prediction"] = np.argmax(ensemble_probs, axis=1)
             results_df["Prediction"] = results_df["Prediction"].map({0: "No Disease", 1: "Typhoid", 2: "Cholera"})
+            # Save each batch upload only once, not on every rerun of the page
+            if st.session_state.get("saved_batch_id") != uploaded_file.file_id:
+                for (_, row), probs in zip(results_df.iterrows(), ensemble_probs):
+                    save_prediction("batch", row, row["Prediction"], probs)
+                st.session_state["saved_batch_id"] = uploaded_file.file_id
             st.markdown('<div class="stSubheader">Results for Many People</div>', unsafe_allow_html=True)
             st.dataframe(results_df.round(2))
         except Exception as e:
@@ -288,6 +324,12 @@ if page == "Disease Prediction":
                 no_disease_prob = ensemble_probs[0, 0]
                 typhoid_prob = ensemble_probs[0, 1]
                 cholera_prob = ensemble_probs[0, 2]
+                save_prediction("single", {
+                    "age": age, "gender": gender, "fever_severity": fever_severity,
+                    "diarrhea_severity": diarrhea_severity, "abdominal_pain_severity": abdominal_pain_severity,
+                    "water_source": water_source, "region": region, "vaccination_status": vaccination_status,
+                    "recent_travel": recent_travel, "food_hygiene": food_hygiene, "case_prevalence": case_prevalence
+                }, ["No Disease", "Typhoid", "Cholera"][prediction], ensemble_probs[0])
 
                 st.markdown('<div class="stSubheader">Your Prediction Results</div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="stText"><strong>Predicted Condition:</strong> {["No Disease", "Typhoid", "Cholera"][prediction]}</div>', unsafe_allow_html=True)

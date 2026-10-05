@@ -27,7 +27,7 @@ The SQLite database `users.db` is created automatically on first run.
 | `Home.py` | Landing page, login/sign-up, user dashboard |
 | `pages/` | Predict Risk, Future Trends, Map Visualizer pages |
 | `train.py` | Generates the synthetic training set and trains/saves the models |
-| `models/` | Trained models, label encoders, performance report |
+| `models/` | Trained models, label encoders, feature scaler, performance report |
 | `data/` | Regional health, facilities, sanitation data and Tanzania boundary GeoJSON |
 | `images/` | Images used in the UI |
 

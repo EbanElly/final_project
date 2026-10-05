@@ -150,11 +150,13 @@ df["food_hygiene"] = le_food.fit_transform(df["food_hygiene"])
 X = df.drop("disease", axis=1)
 y = df["disease"]
 
+# age_risk uses the raw age, so compute it before scaling
+age_risk = np.where(X["age"] > 50, 1, 0)
 scaler = StandardScaler()
 numeric_cols = ["age", "fever_severity", "diarrhea_severity", "abdominal_pain_severity", "case_prevalence"]
 X[numeric_cols] = scaler.fit_transform(X[numeric_cols])
 X["symptom_sum"] = X["fever_severity"] + X["diarrhea_severity"] + X["abdominal_pain_severity"]
-X["age_risk"] = np.where(X["age"] > 50, 1, 0)
+X["age_risk"] = age_risk
 
 # Ensure no NaN values
 X = X.fillna(0)
@@ -231,7 +233,7 @@ print("Random Forest Confusion Matrix:\n", rf_conf_matrix)
 print("XGBoost Confusion Matrix:\n", xgb_conf_matrix)
 
 # Save performance metrics
-with open("model_performance.txt", "w") as f:
+with open("models/model_performance.txt", "w") as f:
     f.write(f"Random Forest Accuracy: {rf_accuracy:.2f}\n")
     f.write(f"XGBoost Accuracy: {xgb_accuracy:.2f}\n")
     f.write(f"Random Forest Log Loss: {rf_log_loss:.2f}\n")
@@ -244,7 +246,8 @@ with open("model_performance.txt", "w") as f:
     f.write(f"Ensemble Log Loss: {ensemble_log_loss:.2f}\n")
 
 # Save models and encoders
-joblib.dump(rf_model, "models/rf_model.pkl")
+# xz compression keeps the random forest under GitHub's 100 MB file limit
+joblib.dump(rf_model, "models/rf_model.pkl", compress=("xz", 9))
 joblib.dump(xgb_model, "models/xgb_model.pkl")
 joblib.dump(le_gender, "models/le_gender.pkl")
 joblib.dump(le_water, "models/le_water.pkl")
@@ -252,6 +255,7 @@ joblib.dump(le_region, "models/le_region.pkl")
 joblib.dump(le_vaccination, "models/le_vaccination.pkl")
 joblib.dump(le_travel, "models/le_travel.pkl")
 joblib.dump(le_food, "models/le_food.pkl")
+joblib.dump(scaler, "models/scaler.pkl")
 
 # Save training data
 df.to_csv("models/tanzania_individual_health_data.csv", index=False)
