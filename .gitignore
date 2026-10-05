@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Virtual environments
+env/
+venv/
+.venv/
+
+# Local app state - contains user accounts and password hashes
+users.db
+*.log
+
+# Editor
+.vscode/

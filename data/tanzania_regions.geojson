@@ -1,0 +1,31 @@
+{
+"type": "FeatureCollection",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Region": "dar es salaam", "Latitude": -6.7924, "Longitude": 39.2083 }, "geometry": { "type": "Point", "coordinates": [ 39.2083, -6.7924 ] } },
+{ "type": "Feature", "properties": { "Region": "arusha", "Latitude": -3.3869, "Longitude": 36.6822 }, "geometry": { "type": "Point", "coordinates": [ 36.6822, -3.3869 ] } },
+{ "type": "Feature", "properties": { "Region": "dodoma", "Latitude": -6.163, "Longitude": 35.7516 }, "geometry": { "type": "Point", "coordinates": [ 35.7516, -6.163 ] } },
+{ "type": "Feature", "properties": { "Region": "geita", "Latitude": -2.871, "Longitude": 32.228 }, "geometry": { "type": "Point", "coordinates": [ 32.228, -2.871 ] } },
+{ "type": "Feature", "properties": { "Region": "iringa", "Latitude": -7.77, "Longitude": 35.69 }, "geometry": { "type": "Point", "coordinates": [ 35.69, -7.77 ] } },
+{ "type": "Feature", "properties": { "Region": "kagera", "Latitude": -1.6, "Longitude": 31.5 }, "geometry": { "type": "Point", "coordinates": [ 31.5, -1.6 ] } },
+{ "type": "Feature", "properties": { "Region": "kigoma", "Latitude": -4.8833, "Longitude": 29.6333 }, "geometry": { "type": "Point", "coordinates": [ 29.6333, -4.8833 ] } },
+{ "type": "Feature", "properties": { "Region": "kilimanjaro", "Latitude": -3.0674, "Longitude": 37.3556 }, "geometry": { "type": "Point", "coordinates": [ 37.3556, -3.0674 ] } },
+{ "type": "Feature", "properties": { "Region": "lindi", "Latitude": -10.0, "Longitude": 39.7167 }, "geometry": { "type": "Point", "coordinates": [ 39.7167, -10.0 ] } },
+{ "type": "Feature", "properties": { "Region": "manyara", "Latitude": -4.0167, "Longitude": 35.75 }, "geometry": { "type": "Point", "coordinates": [ 35.75, -4.0167 ] } },
+{ "type": "Feature", "properties": { "Region": "mara", "Latitude": -1.75, "Longitude": 34.95 }, "geometry": { "type": "Point", "coordinates": [ 34.95, -1.75 ] } },
+{ "type": "Feature", "properties": { "Region": "mbeya", "Latitude": -8.9, "Longitude": 33.45 }, "geometry": { "type": "Point", "coordinates": [ 33.45, -8.9 ] } },
+{ "type": "Feature", "properties": { "Region": "morogoro", "Latitude": -6.8167, "Longitude": 37.6667 }, "geometry": { "type": "Point", "coordinates": [ 37.6667, -6.8167 ] } },
+{ "type": "Feature", "properties": { "Region": "mtwara", "Latitude": -10.2667, "Longitude": 40.1833 }, "geometry": { "type": "Point", "coordinates": [ 40.1833, -10.2667 ] } },
+{ "type": "Feature", "properties": { "Region": "mwanza", "Latitude": -2.5167, "Longitude": 32.9 }, "geometry": { "type": "Point", "coordinates": [ 32.9, -2.5167 ] } },
+{ "type": "Feature", "properties": { "Region": "njombe", "Latitude": -9.3333, "Longitude": 34.7667 }, "geometry": { "type": "Point", "coordinates": [ 34.7667, -9.3333 ] } },
+{ "type": "Feature", "properties": { "Region": "pwani", "Latitude": -7.0, "Longitude": 39.2 }, "geometry": { "type": "Point", "coordinates": [ 39.2, -7.0 ] } },
+{ "type": "Feature", "properties": { "Region": "rukwa", "Latitude": -7.9667, "Longitude": 31.2167 }, "geometry": { "type": "Point", "coordinates": [ 31.2167, -7.9667 ] } },
+{ "type": "Feature", "properties": { "Region": "ruvuma", "Latitude": -10.6667, "Longitude": 35.65 }, "geometry": { "type": "Point", "coordinates": [ 35.65, -10.6667 ] } },
+{ "type": "Feature", "properties": { "Region": "shinyanga", "Latitude": -3.65, "Longitude": 33.4333 }, "geometry": { "type": "Point", "coordinates": [ 33.4333, -3.65 ] } },
+{ "type": "Feature", "properties": { "Region": "simiyu", "Latitude": -2.8, "Longitude": 34.0833 }, "geometry": { "type": "Point", "coordinates": [ 34.0833, -2.8 ] } },
+{ "type": "Feature", "properties": { "Region": "singida", "Latitude": -4.8167, "Longitude": 34.75 }, "geometry": { "type": "Point", "coordinates": [ 34.75, -4.8167 ] } },
+{ "type": "Feature", "properties": { "Region": "songwe", "Latitude": -9.0, "Longitude": 32.7167 }, "geometry": { "type": "Point", "coordinates": [ 32.7167, -9.0 ] } },
+{ "type": "Feature", "properties": { "Region": "tabora", "Latitude": -5.0167, "Longitude": 32.8167 }, "geometry": { "type": "Point", "coordinates": [ 32.8167, -5.0167 ] } },
+{ "type": "Feature", "properties": { "Region": "tanga", "Latitude": -5.0667, "Longitude": 39.1 }, "geometry": { "type": "Point", "coordinates": [ 39.1, -5.0667 ] } }
+]
+}

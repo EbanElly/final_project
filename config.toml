@@ -1,0 +1,6 @@
+[theme]
+backgroundColor = "#FFFFFF"  # Pure white background
+secondaryBackgroundColor = "#F5F5F5"  # Light gray for sidebars (optional)
+primaryColor = "#FF6F61"  # Coral for buttons and accents (adjust as needed)
+textColor = "#333333"  # Dark text for contrast
+font = "sans-serif"

@@ -1,0 +1,64 @@
+Region,Facility_Type,Government,Parastatal,FBO,Private,Total
+Arusha,Hospitals,9,1,8,3,21
+Arusha,Health Centres,40,0,14,9,63
+Arusha,Dispensaries,215,5,57,67,344
+Dar es Salaam,Hospitals,19,1,9,41,70
+Dar es Salaam,Health Centres,27,2,15,26,70
+Dar es Salaam,Dispensaries,122,13,98,295,528
+Dodoma,Hospitals,11,2,2,2,17
+Dodoma,Health Centres,56,1,4,2,63
+Dodoma,Dispensaries,328,3,31,55,417
+Geita,Hospitals,8,0,2,4,14
+Geita,Health Centres,32,0,0,5,37
+Geita,Dispensaries,160,0,9,25,194
+Iringa,Hospitals,6,0,2,2,10
+Iringa,Health Centres,28,1,7,6,42
+Iringa,Dispensaries,195,0,42,17,254
+Kagera,Hospitals,7,0,11,1,19
+Kagera,Health Centres,37,0,8,4,49
+Kagera,Dispensaries,254,4,25,27,310
+Mara,Hospitals,3,0,1,1,5
+Mara,Health Centres,14,0,3,2,19
+Mara,Dispensaries,181,2,22,32,237
+Mbeya,Hospitals,10,0,6,4,20
+Mbeya,Health Centres,15,0,3,2,20
+Mbeya,Dispensaries,190,2,23,34,249
+Morogoro,Hospitals,10,0,6,4,20
+Morogoro,Health Centres,15,0,3,2,20
+Morogoro,Dispensaries,235,3,28,43,309
+Mtwara,Hospitals,5,0,3,2,10
+Mtwara,Health Centres,7,0,1,2,10
+Mtwara,Dispensaries,164,1,20,30,215
+Mwanza,Hospitals,14,0,8,5,27
+Mwanza,Health Centres,20,0,4,3,27
+Mwanza,Dispensaries,219,2,26,40,287
+Njombe,Hospitals,8,0,4,3,15
+Njombe,Health Centres,11,0,2,2,15
+Njombe,Dispensaries,193,2,23,35,253
+Pwani,Hospitals,6,0,3,3,12
+Pwani,Health Centres,9,0,2,1,12
+Pwani,Dispensaries,219,3,26,40,288
+Rukwa,Hospitals,4,0,2,1,7
+Rukwa,Health Centres,5,0,1,1,7
+Rukwa,Dispensaries,149,1,18,27,195
+Ruvuma,Hospitals,8,0,5,3,16
+Ruvuma,Health Centres,12,0,2,2,16
+Ruvuma,Dispensaries,202,2,24,37,265
+Shinyanga,Hospitals,5,0,3,2,10
+Shinyanga,Health Centres,7,0,1,2,10
+Shinyanga,Dispensaries,148,1,18,27,194
+Simuyu,Hospitals,5,0,2,2,9
+Simuyu,Health Centres,7,0,1,1,9
+Simuyu,Dispensaries,150,1,18,28,197
+Singida,Hospitals,7,0,4,3,14
+Singida,Health Centres,10,0,2,2,14
+Singida,Dispensaries,156,1,19,28,204
+Songwe,Hospitals,5,0,3,2,10
+Songwe,Health Centres,7,0,1,2,10
+Songwe,Dispensaries,145,1,18,27,191
+Tabora,Hospitals,7,0,4,3,14
+Tabora,Health Centres,10,0,2,2,14
+Tabora,Dispensaries,215,2,26,39,282
+Tanga,Hospitals,10,0,5,4,19
+Tanga,Health Centres,14,0,3,2,19
+Tanga,Dispensaries,273,3,33,50,359

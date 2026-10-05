@@ -1,0 +1,5 @@
+age,gender,fever_severity,diarrhea_severity,abdominal_pain_severity,water_source,Region,vaccination_status,recent_travel,food_hygiene
+30,Male,2.0,1.0,1.0,Piped,dar es salaam,Yes,No,Good
+40,Female,7.0,6.0,5.0,River,mwanza,No,Yes,Poor
+50,Male,1.0,0.5,0.5,Well,arusha,Yes,No,Good
+25,Female,3.0,2.0,1.5,Rainwater,dodoma,No,Yes,Poor

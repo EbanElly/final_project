@@ -1,0 +1,36 @@
+Random Forest Accuracy: 0.60
+XGBoost Accuracy: 0.59
+Random Forest Log Loss: 0.92
+XGBoost Log Loss: 0.94
+Random Forest Classification Report:
+              precision    recall  f1-score   support
+
+  No Disease       0.69      0.69      0.69      4281
+     Typhoid       0.58      0.65      0.61      3552
+     Cholera       0.40      0.33      0.36      2167
+
+    accuracy                           0.60     10000
+   macro avg       0.56      0.56      0.56     10000
+weighted avg       0.59      0.60      0.59     10000
+
+XGBoost Classification Report:
+              precision    recall  f1-score   support
+
+  No Disease       0.69      0.68      0.68      4281
+     Typhoid       0.58      0.63      0.60      3552
+     Cholera       0.38      0.35      0.36      2167
+
+    accuracy                           0.59     10000
+   macro avg       0.55      0.55      0.55     10000
+weighted avg       0.58      0.59      0.59     10000
+
+Random Forest Confusion Matrix:
+[[2943  861  477]
+ [ 629 2305  618]
+ [ 666  784  717]]
+XGBoost Confusion Matrix:
+[[2911  840  530]
+ [ 655 2225  672]
+ [ 669  747  751]]
+Ensemble Accuracy: 0.60
+Ensemble Log Loss: 0.92
