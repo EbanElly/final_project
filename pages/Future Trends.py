@@ -95,7 +95,7 @@ def save_forecast(user_id, disease, region, scenario, forecast_df):
 # --- Load Data ---
 @st.cache_data
 def load_health_data():
-    df = pd.read_csv("Data/Tanzania_Health_Data_Updated.csv")
+    df = pd.read_csv("data/Tanzania_Health_Data_Updated.csv")
     df['Year'] = pd.to_datetime(df['Year'], format='%Y')
     df['Region'] = df['Region'].str.lower().str.strip()
     return df
